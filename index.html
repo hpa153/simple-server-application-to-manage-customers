@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customers</title>
+    <link rel="stylesheet" type="text/css" href="css/style.css"/>
+</head>
+<body>
+    <div class="main-container">
+        <div class="form">
+            <table>
+                <tr>
+                    <td>Customer #:</td>
+                    <td><input type="text" name="customerId" id="customerId" size="20" placeholder="Your ID" onchange="clearNotification();"></td>
+                </tr>
+                <tr>
+                    <td>First Name:</td>
+                    <td><input type="text" name="firstName" id="firstName" size="40" placeholder="Your First name" onchange="clearNotification();"></td>
+                </tr>
+                <tr>
+                    <td>Last Name:</td>
+                    <td><input type="text" name="lastName" id="lastName" size="40" placeholder="Your Last name" onchange="clearNotification();"></td>
+                </tr>
+                <tr>
+                    <td>Address:</td>
+                    <td><input type="text" name="address" id="address" size="40" placeholder="Your Address" onchange="clearNotification();"></td>
+                </tr>
+                <tr>
+                    <td>City:</td>
+                    <td><input type="text" name="city" id="city" size="20" placeholder="Your City" onchange="clearNotification();"></td>
+                </tr>
+                <tr>
+                    <td>Province:</td>
+                    <td><input type="text" name="province" id="province" size="20" placeholder="Your Province" onchange="clearNotification();"></td>
+                </tr>
+                <tr>
+                    <td>Postal:</td>
+                    <td><input type="text" name="postal" id="postal" size="10" placeholder="Your Postal" onchange="clearNotification();"></td>
+                </tr>
+    
+            </table>
+            <div id="notification"></div>
+            <div class="buttons">
+                <button onclick="clearForm()">New</button>
+                <button onclick="addCustomer()">Add</button>
+                <button onclick="updateCustomer()">Update</button>
+                <button onclick="deleteCustomer()">Delete</button>
+                <button onclick="findCustomer()">Find</button>
+            </div>
+        
+        </div>
+    </div>
+    <script
+        src="https://code.jquery.com/jquery-3.6.0.min.js"
+        integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+        crossorigin="anonymous"
+    ></script>
+    <script>
+        // Customer object constructor
+        class Customer {
+            constructor(customerId, firstName, lastName, address, city, province, postal) {
+                this.customerId = customerId;
+                this.firstName = firstName;
+                this.lastName = lastName;
+                this.address = address;
+                this.city = city;
+                this.province = province;
+                this.postal = postal;
+            }
+        }
+
+        // Retrieve html elements
+        let notification = document.getElementById("notification");
+        let customerIdInput = document.getElementById("customerId");
+        let firstNameInput = document.getElementById("firstName");
+        let lastNameInput = document.getElementById("lastName");
+        let addressInput = document.getElementById("address");
+        let cityInput = document.getElementById("city");
+        let provinceInput = document.getElementById("province");
+        let postalInput = document.getElementById("postal");
+
+        // Function to clear the form
+        function clearForm() {
+            customerIdInput.value = "";
+            firstNameInput.value = "";
+            lastNameInput.value = "";
+            addressInput.value = "";
+            cityInput.value = "";
+            provinceInput.value = "";
+            postalInput.value = "";
+            notification.innerHTML = "";
+        }
+
+        // Function to add customer
+        function addCustomer() {
+            // Retrieve input value 
+            let customerId = customerIdInput.value;
+            let firstName = firstNameInput.value;
+            let lastName = lastNameInput.value;
+            let address = addressInput.value;
+            let city = cityInput.value;
+            let province = provinceInput.value;
+            let postal = postalInput.value;
+
+            // Validate input
+            // If any field is missing input, print a notification to request user fill all fields
+            if (customerId === "" || firstName === "" || lastName === "" || address === "" || city === "" || province === "" || postal === "") { // If any field is missing, print out notification for user
+                notification.innerHTML = "Please fill out all the fields!";
+                notification.style.color = "red";
+            } else {
+                // Create new customer object
+                let customerObj = new Customer(customerId, firstName, lastName, address, city, province, postal);
+
+                // Make post call to add new user
+                post("/customers/add", customerObj).then(rs => {
+                    clearForm();
+                    notification.innerHTML = rs;
+                    notification.style.color = "green";
+                });
+            }
+        }
+
+        // Function to update customer
+        function updateCustomer() {
+            // Retrieve input value 
+            let customerId = customerIdInput.value;
+            let firstName = firstNameInput.value;
+            let lastName = lastNameInput.value;
+            let address = addressInput.value;
+            let city = cityInput.value;
+            let province = provinceInput.value;
+            let postal = postalInput.value;
+
+            // Validate input
+            // If any field is missing input, print a notification to request user fill all fields
+            if (customerId === "" || firstName === "" || lastName === "" || address === "" || city === "" || province === "" || postal === "") { // If any field is missing, print out notification for user
+                notification.innerHTML = "Please fill out all the fields!";
+                notification.style.color = "red";
+            } else {
+                // Create new customer object
+                let customerObj = new Customer(customerId, firstName, lastName, address, city, province, postal);
+
+                // Make post call to update user
+                post("/customers/update", customerObj).then(rs => { // If fulfilled, clear form and inform about successful update
+                    clearForm();
+                    notification.innerHTML = rs;
+                    notification.style.color = "green";
+                });
+            }
+        }
+
+        // Function to delete customer
+        function deleteCustomer(customerId) {
+            // Check if customer ID has been provided
+            if (customerIdInput.value == "") {
+                notification.innerHTML = "Please enter a customer ID!";
+                notification.style.color = "red";
+            } else {
+                // Confirm permission of customer
+                let authority = confirm("Do you have the permission to delete this user?");
+
+                if (authority) {
+                    // Retrieve input value and assign to an object
+                    let customerId = {customerId: customerIdInput.value};
+
+                    // Make post call to delete user
+                    post("/customers/delete", customerId)
+                    .then(rs => { // If fulfilled, clear the form and inform customer about successful deletion
+                        clearForm();
+                        notification.innerHTML = rs;
+                        notification.style.color = "green";
+                    })
+                    .catch(err => { // Otherwise, inform that customer does not exist
+                        notification.innerHTML = "Customer does not exist!";
+                        notification.style.color = "red";
+                    });
+                }
+            }  
+        }
+
+        // Function to find customer
+        function findCustomer() {
+            // Check if customer ID has been provided
+            if (customerIdInput.value == "") {
+                notification.innerHTML = "Please enter a customer ID!";
+                notification.style.color = "red";
+            } else {
+                let customerId = {customerId: customerIdInput.value};
+
+                // Function to verify if returned data is a JSON string
+                function IsJsonString(str) {
+                    try {
+                        JSON.parse(str);
+                    } catch (e) {
+                        return false;
+                    }
+                    return true;
+                }
+
+                // Make post call to find customer
+                post("/customers/find", customerId).then(rs => { // If fulfilled
+                    // Call function to verify JSON string
+                    let isCustomer = IsJsonString(rs);
+
+                    // If returned data is a JSON string
+                    if (isCustomer) {
+                        // Convert the returned JSON string to an object
+                        const customerObject = JSON.parse(rs);
+
+                        // Fill out the text boxes with the customer information
+                        customerIdInput.value = customerObject.customerId;
+                        firstNameInput.value = customerObject.firstName;
+                        lastNameInput.value = customerObject.lastName;
+                        addressInput.value = customerObject.address;
+                        cityInput.value = customerObject.city;
+                        provinceInput.value = customerObject.province;
+                        postalInput.value = customerObject.postal;
+                    } else { // Otherwise, print returned message that customer does not exist
+                        notification.innerHTML = rs;
+                        notification.style.color = "red";
+                    }
+                });
+            }
+        }
+
+        // POST call to list all existing customers
+        async function post(url, data) {
+            let responseResult;
+            await $.ajax({
+                type: "POST",
+                url: url,
+                data: data,
+                success: (result, status, xhr) => {
+                    console.log("POST success: ", result);
+                    responseResult = result;
+                },
+                error: (request, textStatus, errorThrown) => {
+                    console.error("POST error: ", textStatus);
+                    console.error("POST errorThrown: ", errorThrown);
+                },
+                dataType: "json",
+            });
+            return responseResult;
+        }
+
+        // Function to clear notification box
+        function clearNotification() {
+            notification.innerHTML = "";
+        }
+    </script>
+</body>
+</html>
+
